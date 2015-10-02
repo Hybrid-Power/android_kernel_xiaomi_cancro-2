@@ -122,6 +122,7 @@ config CPU_FREQ_DEFAULT_GOV_SMARTMAX
         help
           Use the CPUFreq governor 'smartmax' as default
 
+<<<<<<< HEAD
 config CPU_FREQ_DEFAULT_GOV_IMPULSE
         bool "impulse"
         select CPU_FREQ_GOV_IMPULSE
@@ -153,6 +154,8 @@ config CPU_FREQ_DEFAULT_GOV_YANKACTIVE
           loading your cpufreq low-level hardware driver, using the
           'yankactive' governor for latency-sensitive workloads.
 
+=======
+>>>>>>> parent of 5773c0f... cpufreq: impulse: add new @neobuddy89 governor
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -279,14 +282,6 @@ config CPU_FREQ_GOV_SMARTMAX
         select CPU_FREQ_TABLE
         help
           'smartmax' combined ondemand and smartass2
-
-config CPU_FREQ_GOV_IMPULSE
-        tristate "'impulse' cpufreq policy governor"
-        help
-          'impulse' - This driver adds a dynamic cpufreq policy governor
-          designed for optimized balance between power and performance.
-
-          If in doubt, say N.
 
 config CPU_FREQ_GOV_ZZMOOVE
         tristate "'zzmoove' cpufreq governor"
