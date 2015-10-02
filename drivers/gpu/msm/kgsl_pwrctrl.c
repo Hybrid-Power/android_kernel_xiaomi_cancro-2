@@ -191,8 +191,6 @@ void kgsl_pwrctrl_pwrlevel_change(struct kgsl_device *device,
 #ifdef CONFIG_CPU_FREQ_GOV_SLIM
         graphics_boost = pwr->active_pwrlevel;
 #endif
-}
-EXPORT_SYMBOL(kgsl_pwrctrl_pwrlevel_change);
 
 		/*
 		 * On some platforms, instability is caused on

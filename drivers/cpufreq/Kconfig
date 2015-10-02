@@ -122,13 +122,6 @@ config CPU_FREQ_DEFAULT_GOV_SMARTMAX
         help
           Use the CPUFreq governor 'smartmax' as default
 
-<<<<<<< HEAD
-config CPU_FREQ_DEFAULT_GOV_IMPULSE
-        bool "impulse"
-        select CPU_FREQ_GOV_IMPULSE
-        help
-          Use the CPUFreq governor 'interactive' as default.
-
 config CPU_FREQ_DEFAULT_GOV_ZZMOOVE
           bool "zzmoove"
           select CPU_FREQ_GOV_ZZMOOVE
@@ -154,8 +147,6 @@ config CPU_FREQ_DEFAULT_GOV_YANKACTIVE
           loading your cpufreq low-level hardware driver, using the
           'yankactive' governor for latency-sensitive workloads.
 
-=======
->>>>>>> parent of 5773c0f... cpufreq: impulse: add new @neobuddy89 governor
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
