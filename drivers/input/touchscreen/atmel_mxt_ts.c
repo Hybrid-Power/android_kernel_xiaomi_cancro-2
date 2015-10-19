@@ -616,7 +616,6 @@ struct mxt_data {
         bool is_wakeable;
         bool is_suspended;
         bool is_resumed;
-        bool irq_enabled;
 
 
 
@@ -3504,7 +3503,6 @@ static ssize_t mxt_update_fw_store(struct device *dev,
 
 	dev_info(dev, "Identify firmware name :%s \n", fw_name);
 	disable_irq(data->irq);
-        data->irq_enabled=false;
 
 	error = mxt_load_fw(dev, fw_name);
 	if (error) {
@@ -3526,7 +3524,6 @@ static ssize_t mxt_update_fw_store(struct device *dev,
 
 	if (data->state == APPMODE) {
 		enable_irq(data->irq);
-                data->irq_enabled=true;
 	}
 
 	kfree(fw_name);
@@ -5072,19 +5069,22 @@ static void mxt_clear_touch_event(struct mxt_data *data)
 =======
             enable_irq_wake(client->irq); 
         } else {
+<<<<<<< HEAD
                 disable_irq(client->irq);
                 data->irq_enabled=false;
 >>>>>>> parent of 3dc54af... Fix hw keys wakeup, unresponsive touch, clean up driver code and enable dt2w on mi4
+=======
+            disable_irq(client->irq);
+>>>>>>> parent of c6fca58... Fixed touch not enabling sometimes and reverted in call detection for mi4 temporarily
         }
         
-        
 	data->safe_count = 0;
-// 	cancel_delayed_work_sync(&data->update_setting_delayed_work);
-// 	cancel_delayed_work_sync(&data->disable_anticalib_delayed_work);
-// 	mxt_adjust_self_setting(data, true, TYPE_SELF_THR);
-// 	mxt_adjust_self_setting(data, true, TYPE_SELF_INTTHR_SUSPEND);
-// 	mxt_anti_calib_control(data, true);
-// 	mxt_self_recalib_control(data, true);
+	cancel_delayed_work_sync(&data->update_setting_delayed_work);
+	cancel_delayed_work_sync(&data->disable_anticalib_delayed_work);
+	mxt_adjust_self_setting(data, true, TYPE_SELF_THR);
+	mxt_adjust_self_setting(data, true, TYPE_SELF_INTTHR_SUSPEND);
+	mxt_anti_calib_control(data, true);
+	mxt_self_recalib_control(data, true);
         dev_warn(dev, "anticalib complete\n");
         
         if (dt2w_switch == 0 || in_phone_call()) {
@@ -5157,12 +5157,9 @@ static int mxt_resume(struct device *dev)
         if (dt2w_switch == 1 && !in_phone_call()) {
             disable_irq_wake(data->client->irq);
             dev_warn(dev, "disabling irq wake\n");
-        } 
-        if (!data->irq_enabled) {
+        } else {
             enable_irq(client->irq);
-            data->irq_enabled = true;
         }
-        
         
 // 	
 //         dev_warn(dev, "Enabling irq \n");
@@ -6005,7 +6002,6 @@ static int __devinit mxt_probe(struct i2c_client *client,
 
 	queue_work(data->work_queue, &data->pre_use_work);
 	data->init_complete = true;
-        dt2w_switch = 1;
 
 //         pm_runtime_enable(&data->input_dev);
 	return 0;
@@ -6089,7 +6085,6 @@ static void mxt_shutdown(struct i2c_client *client)
 	struct mxt_data *data = i2c_get_clientdata(client);
 
 	disable_irq(data->irq);
-        data->irq_enabled=false;
 	data->state = SHUTDOWN;
 }
 
