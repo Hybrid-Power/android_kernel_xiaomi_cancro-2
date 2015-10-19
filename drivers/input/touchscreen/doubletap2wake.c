@@ -65,7 +65,11 @@ MODULE_VERSION(DRIVER_VERSION);
 MODULE_LICENSE("GPLv2");
 
 /* Tuneables */
+<<<<<<< HEAD
 #define DT2W_DEBUG				0
+=======
+#define DT2W_DEBUG				1
+>>>>>>> parent of 83a26ec... Disable dt2w by default and disable debugging
 #define DT2W_DEFAULT			1
 
 #define DT2W_PWRKEY_DUR			60
