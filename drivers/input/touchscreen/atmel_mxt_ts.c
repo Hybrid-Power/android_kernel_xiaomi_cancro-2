@@ -28,6 +28,12 @@
 #include <linux/string.h>
 #include <linux/of_gpio.h>
 #include <asm/bootinfo.h>
+#include <mach/gpiomux.h>
+#ifdef CONFIG_FB
+#include <linux/notifier.h>
+#include <linux/fb.h>
+#endif
+
 
 /* Version */
 #define MXT_VER_20		20
@@ -629,6 +635,10 @@ struct mxt_data {
 	u8 T100_reportid_min;
 	u8 T100_reportid_max;
 	u8 T102_reportid;
+
+#ifdef CONFIG_FB
+	struct notifier_block fb_notif;
+#endif
 };
 
 static struct mxt_suspend mxt_save[] = {
@@ -3385,25 +3395,6 @@ static ssize_t mxt_update_fw_show(struct device *dev,
 	return count;
 }
 
-<<<<<<< HEAD
-static void mxt_enable_irq(struct mxt_data *data) {
-
-	if (likely(!data->irq_enabled)) {
-		enable_irq(data->irq);
-		data->irq_enabled=true;
-	}
-}
-
-static void mxt_disable_irq(struct mxt_data *data) {
-	
-	if(likely(data->irq_enabled)) {
-		disable_irq(data->irq);
-		data->irq_enabled=false;
-	}
-}
-
-=======
->>>>>>> parent of 3dc54af... Fix hw keys wakeup, unresponsive touch, clean up driver code and enable dt2w on mi4
 static ssize_t mxt_update_fw_store(struct device *dev,
 					struct device_attribute *attr,
 					const char *buf, size_t count)
@@ -4907,59 +4898,6 @@ static void mxt_clear_touch_event(struct mxt_data *data)
 	input_sync(input_dev);
 }
 
-<<<<<<< HEAD
- static int mxt_suspend(struct device *dev)
- {
-
-        dev_warn(dev, "Entering suspend\n");
-        int ret;
-        struct i2c_client *client = to_i2c_client(dev);
-        struct mxt_data *data = i2c_get_clientdata(client);
-        struct input_dev *input_dev = data->input_dev;
-<<<<<<< HEAD
-
-        dev_warn(dev, "Entering suspend\n");
-        if (data->is_suspended) {
-            return 0;
-        }
-        
-//         dev_warn(dev, "disabling irq\n");
-// 	
-        
-        if (dt2w_switch == 1 && !in_phone_call()) {
-            dev_warn(dev, "Enabling irq wake\n");
-<<<<<<< HEAD
-            enable_irq_wake(data->client->irq);
-            data->is_stopped = 1;
-        } else {
-                mxt_disable_irq(data);
-		dev_warn(dev, "Irq disabled\n");
-                data->safe_count = 0;
-                cancel_delayed_work_sync(&data->disable_anticalib_delayed_work);
-                mutex_lock(&input_dev->mutex);
-                if (input_dev->users)
-                    mxt_stop(data);
-                mutex_unlock(&input_dev->mutex);
-=======
-            enable_irq_wake(client->irq); 
-        } else {
-<<<<<<< HEAD
-                disable_irq(client->irq);
-                data->irq_enabled=false;
->>>>>>> parent of 3dc54af... Fix hw keys wakeup, unresponsive touch, clean up driver code and enable dt2w on mi4
-=======
-            disable_irq(client->irq);
->>>>>>> parent of c6fca58... Fixed touch not enabling sometimes and reverted in call detection for mi4 temporarily
-        }
-=======
-// // // 
-//           enable_irq_wake(data->irq);
-// 	disable_irq(client->irq);
-        enable_irq_wake(client->irq);
-// 
->>>>>>> parent of 9676c05... Fix screen active during call. Also an attempt to make dt2w coexist with ambient display
-        
-=======
 static int mxt_suspend(struct device *dev)
 {
 	int ret;
@@ -4969,7 +4907,6 @@ static int mxt_suspend(struct device *dev)
 
 	disable_irq(client->irq);
 
->>>>>>> parent of 698eee1... added dt2w implementation for mi3w.. not all changes might be necessary. i will update accordingly
 	data->safe_count = 0;
 	cancel_delayed_work_sync(&data->update_setting_delayed_work);
 	cancel_delayed_work_sync(&data->disable_anticalib_delayed_work);
@@ -5026,27 +4963,6 @@ static int mxt_resume(struct device *dev)
 		}
 	}
 
-<<<<<<< HEAD
-//         mxt_soft_reset(data, MXT_RESET_VALUE);
-//         mxt_chip_reset(data);
-<<<<<<< HEAD
-
-        
-            mutex_lock(&input_dev->mutex);
-            if (input_dev->users)
-                mxt_start(data);
-            dev_warn(dev, "Enabling touch\n");
-            mutex_unlock(&input_dev->mutex);
-        
-        if (dt2w_switch == 1 && !in_phone_call()) {
-            disable_irq_wake(data->client->irq);
-            dev_warn(dev, "disabling irq wake\n");
-        } else {
-            enable_irq(client->irq);
-        }
-=======
-=======
->>>>>>> parent of 698eee1... added dt2w implementation for mi3w.. not all changes might be necessary. i will update accordingly
 	mutex_lock(&input_dev->mutex);
 
 	if (input_dev->users)
@@ -5054,16 +4970,7 @@ static int mxt_resume(struct device *dev)
 
 	mutex_unlock(&input_dev->mutex);
 
-<<<<<<< HEAD
-// 	enable_irq(client->irq);
->>>>>>> parent of 9676c05... Fix screen active during call. Also an attempt to make dt2w coexist with ambient display
-        
-//         pm_runtime_disable(&data->input_dev);
-//         pm_runtime_set_active(&data->input_dev);
-//         pm_runtime_enable(&data->input_dev);
-=======
 	enable_irq(client->irq);
->>>>>>> parent of 698eee1... added dt2w implementation for mi3w.. not all changes might be necessary. i will update accordingly
 
 	return 0;
 }
@@ -5092,6 +4999,49 @@ static int mxt_input_disable(struct input_dev *in_dev)
 	return error;
 }
 
+#ifdef CONFIG_FB
+static int fb_notifier_cb(struct notifier_block *self,
+			unsigned long event, void *data)
+{
+	struct fb_event *evdata = data;
+	int *blank;
+	struct mxt_data *mxt_data =
+		container_of(self, struct mxt_data, fb_notif);
+
+	if (evdata && evdata->data && event == FB_EVENT_BLANK && mxt_data) {
+		blank = evdata->data;
+		if (*blank == FB_BLANK_UNBLANK) {
+			dev_info(&mxt_data->client->dev, "##### UNBLANK SCREEN #####\n");
+			mxt_input_enable(mxt_data->input_dev);
+		} else if (*blank == FB_BLANK_POWERDOWN) {
+			dev_info(&mxt_data->client->dev, "##### BLANK SCREEN #####\n");
+			mxt_input_disable(mxt_data->input_dev);
+		}
+	}
+
+	return 0;
+}
+
+static void configure_sleep(struct mxt_data *data)
+{
+	int ret;
+
+	data->fb_notif.notifier_call = fb_notifier_cb;
+	ret = fb_register_client(&data->fb_notif);
+	if (ret) {
+		dev_err(&data->client->dev,
+			"Unable to register fb_notifier, err: %d\n", ret);
+	}
+}
+#else
+static void configure_sleep(struct mxt_data *data)
+{
+	data->input_dev->enable = mxt_input_enable;
+	data->input_dev->disable = mxt_input_disable;
+	data->input_dev->enabled = true;
+}
+#endif
+
 static int mxt_initialize_input_device(struct mxt_data *data)
 {
 	struct device *dev = &data->client->dev;
@@ -5117,9 +5067,6 @@ static int mxt_initialize_input_device(struct mxt_data *data)
 	input_dev->dev.parent = dev;
 	input_dev->open = mxt_input_open;
 	input_dev->close = mxt_input_close;
-	input_dev->enable = mxt_input_enable;
-	input_dev->disable = mxt_input_disable;
-	input_dev->enabled = true;
 	input_dev->event = mxt_input_event;
 
 	__set_bit(EV_ABS, input_dev->evbit);
@@ -5177,6 +5124,8 @@ static int mxt_initialize_input_device(struct mxt_data *data)
 	}
 
 	data->input_dev = input_dev;
+
+	configure_sleep(data);
 
 	return 0;
 }
